@@ -18,6 +18,8 @@ app.MapPost("/api/sellers", async (SellerCreateDto dto, AppDbContext db, IHttpCl
     {
         SellerName = dto.SellerName,
         SellerDomain = dto.SellerDomain,
+        SellerIndustry = dto.SellerIndustry,
+        SellerPhone = dto.SellerPhone,
         HubSpotId = dto.HubSpotId
     };
 
@@ -71,6 +73,8 @@ app.MapPost("/api/sellers", async (SellerCreateDto dto, AppDbContext db, IHttpCl
         seller.Id,
         seller.SellerName,
         seller.SellerDomain,
+        seller.SellerIndustry,
+        seller.SellerPhone,
         seller.HubSpotId
     ));
 });
@@ -85,6 +89,8 @@ app.MapGet("/api/sellers/{id}", async (int id, AppDbContext db) =>
             seller.Id,
             seller.SellerName,
             seller.SellerDomain,
+            seller.SellerIndustry,
+            seller.SellerPhone,
             seller.HubSpotId
         ));
 });
@@ -96,6 +102,8 @@ app.MapGet("/api/sellers", async (AppDbContext db) =>
             s.Id,
             s.SellerName,
             s.SellerDomain,
+            s.SellerIndustry,
+            s.SellerPhone,
             s.HubSpotId
         ))
         .ToListAsync();
@@ -121,6 +129,14 @@ app.MapPut("/api/sellers/{id}", async (int id, SellerUpdateDto dto, AppDbContext
     {
         seller.SellerDomain = dto.SellerDomain;
     }
+    if (dto.SellerIndustry is not null)
+    {
+        seller.SellerIndustry = dto.SellerIndustry;
+    }
+    if (dto.SellerPhone is not null)
+    {
+        seller.SellerPhone = dto.SellerPhone;
+    }
     if (dto.HubSpotId is not null)
     {
         seller.HubSpotId = dto.HubSpotId;
@@ -132,6 +148,8 @@ app.MapPut("/api/sellers/{id}", async (int id, SellerUpdateDto dto, AppDbContext
         seller.Id,
         seller.SellerName,
         seller.SellerDomain,
+        seller.SellerIndustry,
+        seller.SellerPhone,
         seller.HubSpotId
     ));
 });
