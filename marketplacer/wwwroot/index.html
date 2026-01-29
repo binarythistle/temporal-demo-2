@@ -183,35 +183,140 @@
             padding: 40px;
             color: #888;
         }
+        
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.2s;
+        }
+        
+        .tab:hover {
+            color: #007bff;
+        }
+        
+        .tab.active {
+            color: #007bff;
+            border-bottom-color: #007bff;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .webhook-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 16px;
+            background-color: #fafafa;
+            margin-bottom: 12px;
+        }
+        
+        .webhook-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+        
+        .webhook-id {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .webhook-time {
+            color: #888;
+            font-size: 13px;
+        }
+        
+        .webhook-details {
+            display: grid;
+            gap: 6px;
+            font-size: 14px;
+        }
+        
+        .webhook-detail {
+            color: #666;
+        }
+        
+        .webhook-detail strong {
+            color: #444;
+        }
+        
+        .webhook-body {
+            background: #f0f0f0;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Marketplace Seller Management</h1>
         
-        <div class="section">
-            <h2>Create New Seller</h2>
-            <div id="createMessage" class="message"></div>
-            <form id="createSellerForm">
-                <div class="form-group">
-                    <label for="sellerName">Seller Name *</label>
-                    <input type="text" id="sellerName" name="sellerName" required>
-                </div>
-                <div class="form-group">
-                    <label for="sellerDomain">Seller Domain</label>
-                    <input type="text" id="sellerDomain" name="sellerDomain" placeholder="example.com">
-                </div>
-                <button type="submit" class="btn btn-primary">Create Seller</button>
-            </form>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('sellers')">Sellers</button>
+            <button class="tab" onclick="switchTab('webhooks')">Webhooks</button>
         </div>
         
-        <div class="section">
-            <div class="sellers-header">
-                <h2>Sellers</h2>
-                <button id="refreshBtn" class="btn btn-secondary">Refresh</button>
+        <div id="sellersTab" class="tab-content active">
+            <div class="section">
+                <h2>Create New Seller</h2>
+                <div id="createMessage" class="message"></div>
+                <form id="createSellerForm">
+                    <div class="form-group">
+                        <label for="sellerName">Seller Name *</label>
+                        <input type="text" id="sellerName" name="sellerName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="sellerDomain">Seller Domain</label>
+                        <input type="text" id="sellerDomain" name="sellerDomain" placeholder="example.com">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Seller</button>
+                </form>
             </div>
-            <div id="sellersContainer">
-                <div class="empty-state">Loading sellers...</div>
+            
+            <div class="section">
+                <div class="sellers-header">
+                    <h2>Sellers</h2>
+                    <button id="refreshBtn" class="btn btn-secondary">Refresh</button>
+                </div>
+                <div id="sellersContainer">
+                    <div class="empty-state">Loading sellers...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="webhooksTab" class="tab-content">
+            <div class="section">
+                <div class="sellers-header">
+                    <h2>Webhook Events</h2>
+                    <button id="refreshWebhooksBtn" class="btn btn-secondary">Refresh</button>
+                </div>
+                <div id="webhooksContainer">
+                    <div class="empty-state">Loading webhooks...</div>
+                </div>
             </div>
         </div>
     </div>
@@ -264,6 +369,32 @@
         document.getElementById('refreshBtn').addEventListener('click', () => {
             loadSellers();
         });
+        
+        // Refresh webhooks button
+        document.getElementById('refreshWebhooksBtn').addEventListener('click', () => {
+            loadWebhooks();
+        });
+        
+        // Tab switching
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            if (tabName === 'sellers') {
+                document.getElementById('sellersTab').classList.add('active');
+            } else if (tabName === 'webhooks') {
+                document.getElementById('webhooksTab').classList.add('active');
+                loadWebhooks();
+            }
+        }
         
         // Load sellers from API
         async function loadSellers() {
@@ -329,6 +460,57 @@
             } catch (error) {
                 alert(`Error: ${error.message}`);
             }
+        }
+        
+        // Load webhooks from API
+        async function loadWebhooks() {
+            const container = document.getElementById('webhooksContainer');
+            container.innerHTML = '<div class="empty-state">Loading webhooks...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/webhooks`);
+                
+                if (response.ok) {
+                    const webhooks = await response.json();
+                    displayWebhooks(webhooks);
+                } else {
+                    container.innerHTML = '<div class="empty-state">Error loading webhooks</div>';
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="empty-state">Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Display webhooks in the UI
+        function displayWebhooks(webhooks) {
+            const container = document.getElementById('webhooksContainer');
+            
+            if (webhooks.length === 0) {
+                container.innerHTML = '<div class="empty-state">No webhooks found. Create a seller to trigger a webhook!</div>';
+                return;
+            }
+            
+            const webhooksHTML = webhooks.map(webhook => {
+                const createdDate = new Date(webhook.createdAt).toLocaleString();
+                return `
+                    <div class="webhook-card">
+                        <div class="webhook-header">
+                            <div class="webhook-id">Webhook ID: ${escapeHtml(webhook.webhookId)}</div>
+                            <div class="webhook-time">${createdDate}</div>
+                        </div>
+                        <div class="webhook-details">
+                            <div class="webhook-detail"><strong>Event Type:</strong> ${escapeHtml(webhook.webhookEventType)}</div>
+                            <div class="webhook-detail"><strong>Object Type:</strong> ${escapeHtml(webhook.webhookObjectType)}</div>
+                            <div class="webhook-detail"><strong>Object ID:</strong> ${escapeHtml(webhook.webhookObjectId)}</div>
+                            <div class="webhook-detail"><strong>Idempotency Key:</strong> ${escapeHtml(webhook.idempotencyKey)}</div>
+                            <div class="webhook-detail"><strong>Body:</strong></div>
+                            <div class="webhook-body">${escapeHtml(webhook.webhookBody)}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = webhooksHTML;
         }
         
         // Show message helper
