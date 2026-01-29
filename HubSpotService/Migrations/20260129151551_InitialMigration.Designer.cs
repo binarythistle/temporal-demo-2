@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HubSpotService.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260129112621_InitialMigration")]
+    [Migration("20260129151551_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />
