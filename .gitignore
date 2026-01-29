@@ -3,6 +3,11 @@
 ##
 ## Get latest from `dotnet new gitignore`
 
+# SQLite DB Files
+*.db
+*.db-shm
+*.db-wal
+
 # dotenv files
 .env
 
@@ -64,6 +69,7 @@ BenchmarkDotNet.Artifacts/
 project.lock.json
 project.fragment.lock.json
 artifacts/
+context.md
 
 # Tye
 .tye/
