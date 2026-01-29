@@ -1,7 +1,8 @@
 namespace marketplacer.Dtos;
 
-public record UpdateSellerDto(
-    string? SellerName,
+public record SellerReadDto(
+    int Id,
+    string SellerName,
     string? SellerDomain,
     string? HubSpotId
 );

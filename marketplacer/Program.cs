@@ -11,7 +11,7 @@ var app = builder.Build();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-app.MapPost("/api/sellers", async (CreateSellerDto dto, AppDbContext db) =>
+app.MapPost("/api/sellers", async (SellerCreateDto dto, AppDbContext db) =>
 {
     var seller = new Seller
     {
@@ -23,7 +23,7 @@ app.MapPost("/api/sellers", async (CreateSellerDto dto, AppDbContext db) =>
     db.Sellers.Add(seller);
     await db.SaveChangesAsync();
 
-    return Results.Created($"/api/sellers/{seller.Id}", new SellerDto(
+    return Results.Created($"/api/sellers/{seller.Id}", new SellerReadDto(
         seller.Id,
         seller.SellerName,
         seller.SellerDomain,
@@ -37,7 +37,7 @@ app.MapGet("/api/sellers/{id}", async (int id, AppDbContext db) =>
 
     return seller is null
         ? Results.NotFound()
-        : Results.Ok(new SellerDto(
+        : Results.Ok(new SellerReadDto(
             seller.Id,
             seller.SellerName,
             seller.SellerDomain,
@@ -48,7 +48,7 @@ app.MapGet("/api/sellers/{id}", async (int id, AppDbContext db) =>
 app.MapGet("/api/sellers", async (AppDbContext db) =>
 {
     var sellers = await db.Sellers
-        .Select(s => new SellerDto(
+        .Select(s => new SellerReadDto(
             s.Id,
             s.SellerName,
             s.SellerDomain,
@@ -59,7 +59,7 @@ app.MapGet("/api/sellers", async (AppDbContext db) =>
     return Results.Ok(sellers);
 });
 
-app.MapPut("/api/sellers/{id}", async (int id, UpdateSellerDto dto, AppDbContext db) =>
+app.MapPut("/api/sellers/{id}", async (int id, SellerUpdateDto dto, AppDbContext db) =>
 {
     
     var seller = await db.Sellers.FindAsync(id);
@@ -84,7 +84,7 @@ app.MapPut("/api/sellers/{id}", async (int id, UpdateSellerDto dto, AppDbContext
 
     await db.SaveChangesAsync();
 
-    return Results.Ok(new SellerDto(
+    return Results.Ok(new SellerReadDto(
         seller.Id,
         seller.SellerName,
         seller.SellerDomain,
