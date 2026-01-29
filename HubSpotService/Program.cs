@@ -1,66 +1,34 @@
 
 
+using Mapster;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlite(builder.Configuration.GetConnectionString("SqlLiteConnection")));
 
+builder.Services.AddMapster();
 
 var app = builder.Build();
 
 app.MapPost("/api/webhooks", async (WebhookEventCreateDto createDto, AppDbContext db) =>
 {
-    var webhookEvent = new WebhookEvent
-    {
-        IdempotencyKey = createDto.IdempotencyKey,
-        WebhookId = createDto.WebhookId,
-        WebhookBody = createDto.WebhookBody,
-        WebhookHeaders = createDto.WebhookHeaders,
-        WebhookObjectId = createDto.WebhookObjectId,
-        WebhookObjectType = createDto.WebhookObjectType,
-        WebhookEventType = createDto.WebhookEventType,
-        SentFromSourceAt = createDto.SentFromSourceAt,
-        CreatedAt = DateTime.UtcNow
-    };
+    var webhookEvent = createDto.Adapt<WebhookEvent>();
 
     db.WebhookEvents.Add(webhookEvent);
     await db.SaveChangesAsync();
 
-    var readDto = new WebhookEventReadDto(
-        webhookEvent.Id,
-        webhookEvent.IdempotencyKey,
-        webhookEvent.WebhookId,
-        webhookEvent.WebhookBody,
-        webhookEvent.WebhookHeaders,
-        webhookEvent.WebhookObjectId,
-        webhookEvent.WebhookObjectType,
-        webhookEvent.WebhookEventType,
-        webhookEvent.CreatedAt,
-        webhookEvent.SentFromSourceAt
-    );
+    var readDto = webhookEvent.Adapt<WebhookEventReadDto>();
 
     return Results.Created($"/api/webhooks/{webhookEvent.Id}", readDto);
 });
 
 app.MapGet("/api/webhooks", async (AppDbContext db) =>
 {
-    var webhookEvents = await db.WebhookEvents
-        .Select(w => new WebhookEventReadDto(
-            w.Id,
-            w.IdempotencyKey,
-            w.WebhookId,
-            w.WebhookBody,
-            w.WebhookHeaders,
-            w.WebhookObjectId,
-            w.WebhookObjectType,
-            w.WebhookEventType,
-            w.CreatedAt,
-            w.SentFromSourceAt
-        ))
-        .ToListAsync();
+    var webhookEvents = await db.WebhookEvents.ToListAsync();
+    var readDtos = webhookEvents.Adapt<List<WebhookEventReadDto>>();
 
-    return Results.Ok(webhookEvents);
+    return Results.Ok(readDtos);
 });
 
 app.Run();
