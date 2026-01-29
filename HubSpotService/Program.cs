@@ -33,12 +33,16 @@ app.MapPost("/api/webhooks", async (WebhookEventCreateDto createDto, AppDbContex
     db.WebhookEvents.Add(webhookEvent);
     await db.SaveChangesAsync();
 
-    // Call HubSpot API with hard-coded values
+    // Parse webhook body to extract sellerName
+    var webhookBodyJson = JsonDocument.Parse(createDto.WebhookBody);
+    var sellerName = webhookBodyJson.RootElement.GetProperty("sellerName").GetString() ?? "Unknown Seller";
+
+    // Call HubSpot API with dynamic sellerName
     var hubSpotDto = new HubSpotCompanyCreateDto
     {
         Properties = new Properties
         {
-            Name = "Test Company Name",
+            Name = sellerName,
             Domain = "testcompany.com",
             Industry = "RETAIL",
             Phone = "555-123-4567"
