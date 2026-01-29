@@ -64,6 +64,14 @@ public class SellerCreatedWorkflow
             MaximumAttempts = 0  // Infinite retries!
         };
 
+        // DEMO DELAY: Give time to kill Marketplacer for chaos testing
+        // TEMPORAL CONCEPT: Workflow.DelayAsync is a durable timer
+        // Unlike Thread.Sleep or Task.Delay, this timer:
+        // - Is tracked in workflow history
+        // - Survives worker restarts
+        // - Can be seen in the Temporal UI
+        await Workflow.DelayAsync(TimeSpan.FromSeconds(10));
+
         // Step 1: Create company in HubSpot
         // TEMPORAL CONCEPT: Activity Execution
         // - StartToCloseTimeout: Max time for a single attempt (2 minutes)
