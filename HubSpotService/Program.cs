@@ -3,6 +3,7 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using HubSpotService.Services;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,6 +12,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlite(builder.Configuration.GetConnectionString("SqlLiteConnection")));
 
 builder.Services.AddMapster();
+
+
+builder.Services.AddScoped<HubSpotCompanyService>();
 
 // Configure HttpClient for HubSpot
 builder.Services.AddHttpClient("HubSpot", client =>
@@ -25,7 +29,7 @@ var app = builder.Build();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-app.MapPost("/api/webhooks", async (WebhookEventCreateDto createDto, AppDbContext db, IHttpClientFactory httpClientFactory, IConfiguration configuration) =>
+app.MapPost("/api/webhooks", async (WebhookEventCreateDto createDto, AppDbContext db, IHttpClientFactory httpClientFactory, IConfiguration configuration, HubSpotCompanyService hubSpotService) =>
 {
     var webhookEvent = createDto.Adapt<WebhookEvent>();
     webhookEvent.CreatedAt = DateTime.UtcNow;
@@ -33,21 +37,8 @@ app.MapPost("/api/webhooks", async (WebhookEventCreateDto createDto, AppDbContex
     db.WebhookEvents.Add(webhookEvent);
     await db.SaveChangesAsync();
 
-    // Parse webhook body to extract sellerName
-    var webhookBodyJson = JsonDocument.Parse(createDto.WebhookBody);
-    var sellerName = webhookBodyJson.RootElement.GetProperty("sellerName").GetString() ?? "Unknown Seller";
-
-    // Call HubSpot API with dynamic sellerName
-    var hubSpotDto = new HubSpotCompanyCreateDto
-    {
-        Properties = new Properties
-        {
-            Name = sellerName,
-            Domain = "testcompany.com",
-            Industry = "RETAIL",
-            Phone = "555-123-4567"
-        }
-    };
+    // Create HubSpot company DTO from webhook body
+    var hubSpotDto = hubSpotService.CreateCompanyDto(createDto.WebhookBody);
 
     var httpClient = httpClientFactory.CreateClient("HubSpot");
     var hubSpotEndpoint = configuration["HubSpotEndpoint"];
