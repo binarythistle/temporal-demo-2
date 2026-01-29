@@ -43,6 +43,22 @@ app.MapPost("/api/sellers", async (SellerCreateDto dto, AppDbContext db, IHttpCl
         try
         {
             await httpClient.PostAsJsonAsync(webhookEndpoint, webhookPayload);
+            
+            // Store webhook event in database
+            var webhookEvent = new WebhookEvent
+            {
+                IdempotencyKey = webhookPayload.IdempotencyKey,
+                WebhookId = webhookPayload.WebhookId,
+                WebhookBody = webhookPayload.WebhookBody,
+                WebhookHeaders = webhookPayload.WebhookHeaders,
+                WebhookObjectId = webhookPayload.WebhookObjectId,
+                WebhookObjectType = webhookPayload.WebhookObjectType,
+                WebhookEventType = webhookPayload.WebhookEventType,
+                CreatedAt = DateTime.UtcNow
+            };
+            
+            db.WebhookEvents.Add(webhookEvent);
+            await db.SaveChangesAsync();
         }
         catch (Exception ex)
         {
