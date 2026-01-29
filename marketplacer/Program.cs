@@ -151,5 +151,24 @@ app.MapDelete("/api/sellers/{id}", async (int id, AppDbContext db) =>
     return Results.NoContent();
 });
 
+app.MapGet("/api/webhooks", async (AppDbContext db) =>
+{
+    var webhooks = await db.WebhookEvents
+        .Select(w => new WebhookEventReadDto(
+            w.Id,
+            w.IdempotencyKey,
+            w.WebhookId,
+            w.WebhookBody,
+            w.WebhookHeaders,
+            w.WebhookObjectId,
+            w.WebhookObjectType,
+            w.WebhookEventType,
+            w.CreatedAt
+        ))
+        .ToListAsync();
+
+    return Results.Ok(webhooks);
+});
+
 app.Run();
 
