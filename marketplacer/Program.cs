@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlite(builder.Configuration.GetConnectionString("SqlLiteConnection")));
+builder.Services.AddHttpClient();
 
 
 var app = builder.Build();
@@ -11,7 +12,7 @@ var app = builder.Build();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-app.MapPost("/api/sellers", async (SellerCreateDto dto, AppDbContext db) =>
+app.MapPost("/api/sellers", async (SellerCreateDto dto, AppDbContext db, IHttpClientFactory httpClientFactory, IConfiguration configuration) =>
 {
     var seller = new Seller
     {
@@ -22,6 +23,33 @@ app.MapPost("/api/sellers", async (SellerCreateDto dto, AppDbContext db) =>
 
     db.Sellers.Add(seller);
     await db.SaveChangesAsync();
+
+    // Send webhook to HubSpot service
+    var webhookEndpoint = configuration["HubSpotServiceWebhookEndpoint"];
+    if (!string.IsNullOrEmpty(webhookEndpoint))
+    {
+        var httpClient = httpClientFactory.CreateClient();
+        var webhookPayload = new WebhookEventCreateDto(
+            IdempotencyKey: Guid.NewGuid().ToString(),
+            WebhookId: $"webhook-{Guid.NewGuid()}",
+            WebhookBody: $"{{\"sellerId\": {seller.Id}, \"sellerName\": \"{seller.SellerName}\"}}",
+            WebhookHeaders: "{\"Content-Type\": \"application/json\"}",
+            WebhookObjectId: seller.Id.ToString(),
+            WebhookObjectType: "Seller",
+            WebhookEventType: "seller.created",
+            SentFromSourceAt: DateTime.UtcNow
+        );
+
+        try
+        {
+            await httpClient.PostAsJsonAsync(webhookEndpoint, webhookPayload);
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't fail the request
+            Console.WriteLine($"Failed to send webhook: {ex.Message}");
+        }
+    }
 
     return Results.Created($"/api/sellers/{seller.Id}", new SellerReadDto(
         seller.Id,
