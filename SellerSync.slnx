@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="SellerSync.Contracts/SellerSync.Contracts.csproj" />
+  <Project Path="SellerSync.Worker/SellerSync.Worker.csproj" />
+  <Project Path="SellerSync.Workflows/SellerSync.Workflows.csproj" />
+</Solution>
