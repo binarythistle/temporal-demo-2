@@ -69,7 +69,8 @@ BenchmarkDotNet.Artifacts/
 project.lock.json
 project.fragment.lock.json
 artifacts/
-context.md
+[Cc]ontext.md
+CLAUDE.md
 
 # Tye
 .tye/
