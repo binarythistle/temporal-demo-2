@@ -1,9 +1,13 @@
+using Mapster;
 using marketplacer.Dtos;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlite(builder.Configuration.GetConnectionString("SqlLiteConnection")));
+
+builder.Services.AddMapster();
+
 builder.Services.AddHttpClient();
 
 
@@ -14,14 +18,7 @@ app.UseStaticFiles();
 
 app.MapPost("/api/sellers", async (SellerCreateDto dto, AppDbContext db, IHttpClientFactory httpClientFactory, IConfiguration configuration) =>
 {
-    var seller = new Seller
-    {
-        SellerName = dto.SellerName,
-        SellerDomain = dto.SellerDomain,
-        SellerIndustry = dto.SellerIndustry,
-        SellerPhone = dto.SellerPhone,
-        HubSpotId = dto.HubSpotId
-    };
+    var seller = dto.Adapt<Seller>();
 
     db.Sellers.Add(seller);
     await db.SaveChangesAsync();
@@ -69,14 +66,7 @@ app.MapPost("/api/sellers", async (SellerCreateDto dto, AppDbContext db, IHttpCl
         }
     }
 
-    return Results.Created($"/api/sellers/{seller.Id}", new SellerReadDto(
-        seller.Id,
-        seller.SellerName,
-        seller.SellerDomain,
-        seller.SellerIndustry,
-        seller.SellerPhone,
-        seller.HubSpotId
-    ));
+    return Results.Created($"/api/sellers/{seller.Id}", seller.Adapt<SellerReadDto>());
 });
 
 app.MapGet("/api/sellers/{id}", async (int id, AppDbContext db) =>
@@ -85,27 +75,13 @@ app.MapGet("/api/sellers/{id}", async (int id, AppDbContext db) =>
 
     return seller is null
         ? Results.NotFound()
-        : Results.Ok(new SellerReadDto(
-            seller.Id,
-            seller.SellerName,
-            seller.SellerDomain,
-            seller.SellerIndustry,
-            seller.SellerPhone,
-            seller.HubSpotId
-        ));
+        : Results.Ok(seller.Adapt<SellerReadDto>());
 });
 
 app.MapGet("/api/sellers", async (AppDbContext db) =>
 {
     var sellers = await db.Sellers
-        .Select(s => new SellerReadDto(
-            s.Id,
-            s.SellerName,
-            s.SellerDomain,
-            s.SellerIndustry,
-            s.SellerPhone,
-            s.HubSpotId
-        ))
+        .ProjectToType<SellerReadDto>()
         .ToListAsync();
 
     return Results.Ok(sellers);
@@ -121,37 +97,11 @@ app.MapPut("/api/sellers/{id}", async (int id, SellerUpdateDto dto, AppDbContext
         return Results.NotFound();
     }
 
-    if (dto.SellerName is not null)
-    {
-        seller.SellerName = dto.SellerName;
-    }
-    if (dto.SellerDomain is not null)
-    {
-        seller.SellerDomain = dto.SellerDomain;
-    }
-    if (dto.SellerIndustry is not null)
-    {
-        seller.SellerIndustry = dto.SellerIndustry;
-    }
-    if (dto.SellerPhone is not null)
-    {
-        seller.SellerPhone = dto.SellerPhone;
-    }
-    if (dto.HubSpotId is not null)
-    {
-        seller.HubSpotId = dto.HubSpotId;
-    }
+    dto.Adapt(seller);
 
     await db.SaveChangesAsync();
 
-    return Results.Ok(new SellerReadDto(
-        seller.Id,
-        seller.SellerName,
-        seller.SellerDomain,
-        seller.SellerIndustry,
-        seller.SellerPhone,
-        seller.HubSpotId
-    ));
+    return Results.Ok(seller.Adapt<SellerReadDto>());
 });
 
 app.MapDelete("/api/sellers/{id}", async (int id, AppDbContext db) =>
@@ -173,17 +123,7 @@ app.MapGet("/api/webhooks", async (AppDbContext db) =>
 {
     var webhooks = await db.WebhookEvents
         .OrderByDescending(w => w.CreatedAt)
-        .Select(w => new WebhookEventReadDto(
-            w.Id,
-            w.IdempotencyKey,
-            w.WebhookId,
-            w.WebhookBody,
-            w.WebhookHeaders,
-            w.WebhookObjectId,
-            w.WebhookObjectType,
-            w.WebhookEventType,
-            w.CreatedAt
-        ))
+        .ProjectToType<WebhookEventReadDto>()
         .ToListAsync();
 
     return Results.Ok(webhooks);
