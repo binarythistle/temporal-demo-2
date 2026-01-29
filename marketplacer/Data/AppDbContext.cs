@@ -8,4 +8,5 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<Seller> Sellers { get; set; } = default!;
+    public DbSet<WebhookEvent> WebhookEvents { get; set; } = default!;
 }
