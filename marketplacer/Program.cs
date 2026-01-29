@@ -8,6 +8,9 @@ builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlite(builder.Configu
 
 var app = builder.Build();
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.MapPost("/api/sellers", async (CreateSellerDto dto, AppDbContext db) =>
 {
     var seller = new Seller

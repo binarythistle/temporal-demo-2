@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .section {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 24px;
+        }
+        
+        h2 {
+            color: #555;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        
+        .message {
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            display: none;
+        }
+        
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .message.show {
+            display: block;
+        }
+        
+        .sellers-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .sellers-list {
+            display: grid;
+            gap: 12px;
+        }
+        
+        .seller-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 16px;
+            background-color: #fafafa;
+        }
+        
+        .seller-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+        
+        .seller-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+        }
+        
+        .seller-id {
+            color: #888;
+            font-size: 14px;
+        }
+        
+        .seller-details {
+            display: grid;
+            gap: 6px;
+        }
+        
+        .seller-detail {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .seller-detail strong {
+            color: #444;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Seller Management</h1>
+        
+        <div class="section">
+            <h2>Create New Seller</h2>
+            <div id="createMessage" class="message"></div>
+            <form id="createSellerForm">
+                <div class="form-group">
+                    <label for="sellerName">Seller Name *</label>
+                    <input type="text" id="sellerName" name="sellerName" required>
+                </div>
+                <div class="form-group">
+                    <label for="sellerDomain">Seller Domain</label>
+                    <input type="text" id="sellerDomain" name="sellerDomain" placeholder="example.com">
+                </div>
+                <button type="submit" class="btn btn-primary">Create Seller</button>
+            </form>
+        </div>
+        
+        <div class="section">
+            <div class="sellers-header">
+                <h2>Sellers</h2>
+                <button id="refreshBtn" class="btn btn-secondary">Refresh</button>
+            </div>
+            <div id="sellersContainer">
+                <div class="empty-state">Loading sellers...</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE_URL = '/api';
+        
+        // Load sellers on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSellers();
+        });
+        
+        // Create seller form submission
+        document.getElementById('createSellerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const sellerName = document.getElementById('sellerName').value.trim();
+            const sellerDomain = document.getElementById('sellerDomain').value.trim() || null;
+            
+            const payload = {
+                sellerName,
+                sellerDomain,
+                hubSpotId: null
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/sellers`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (response.ok) {
+                    const seller = await response.json();
+                    showMessage('createMessage', `Seller "${seller.sellerName}" created successfully!`, 'success');
+                    document.getElementById('createSellerForm').reset();
+                    loadSellers(); // Refresh the list
+                } else {
+                    const error = await response.text();
+                    showMessage('createMessage', `Error: ${error}`, 'error');
+                }
+            } catch (error) {
+                showMessage('createMessage', `Error: ${error.message}`, 'error');
+            }
+        });
+        
+        // Refresh button
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            loadSellers();
+        });
+        
+        // Load sellers from API
+        async function loadSellers() {
+            const container = document.getElementById('sellersContainer');
+            container.innerHTML = '<div class="empty-state">Loading sellers...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/sellers`);
+                
+                if (response.ok) {
+                    const sellers = await response.json();
+                    displaySellers(sellers);
+                } else {
+                    container.innerHTML = '<div class="empty-state">Error loading sellers</div>';
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="empty-state">Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Display sellers in the UI
+        function displaySellers(sellers) {
+            const container = document.getElementById('sellersContainer');
+            
+            if (sellers.length === 0) {
+                container.innerHTML = '<div class="empty-state">No sellers found. Create one above!</div>';
+                return;
+            }
+            
+            const sellersHTML = sellers.map(seller => `
+                <div class="seller-card">
+                    <div class="seller-card-header">
+                        <div>
+                            <div class="seller-name">${escapeHtml(seller.sellerName)}</div>
+                            <div class="seller-id">ID: ${seller.id}</div>
+                        </div>
+                        <button class="btn btn-danger" onclick="deleteSeller(${seller.id})">Delete</button>
+                    </div>
+                    <div class="seller-details">
+                        ${seller.sellerDomain ? `<div class="seller-detail"><strong>Domain:</strong> ${escapeHtml(seller.sellerDomain)}</div>` : ''}
+                        ${seller.hubSpotId 
+                            ? `<div class="seller-detail"><strong>HubSpot ID:</strong> ${escapeHtml(seller.hubSpotId)}</div>` 
+                            : `<div class="seller-detail"><strong style="color: red;">Not linked to Hubspot</strong></div>`}
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = `<div class="sellers-list">${sellersHTML}</div>`;
+        }
+        
+        // Delete seller
+        async function deleteSeller(id) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/sellers/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    loadSellers(); // Refresh the list
+                } else {
+                    alert('Error deleting seller');
+                }
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+        
+        // Show message helper
+        function showMessage(elementId, text, type) {
+            const messageEl = document.getElementById(elementId);
+            messageEl.textContent = text;
+            messageEl.className = `message ${type} show`;
+            
+            setTimeout(() => {
+                messageEl.classList.remove('show');
+            }, 5000);
+        }
+        
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
