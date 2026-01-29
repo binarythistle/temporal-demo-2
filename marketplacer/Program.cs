@@ -97,7 +97,9 @@ app.MapPut("/api/sellers/{id}", async (int id, SellerUpdateDto dto, AppDbContext
         return Results.NotFound();
     }
 
-    dto.Adapt(seller);
+    var config = TypeAdapterConfig.GlobalSettings.Clone();
+    config.Default.IgnoreNullValues(true);
+    dto.Adapt(seller, config);
 
     await db.SaveChangesAsync();
 
