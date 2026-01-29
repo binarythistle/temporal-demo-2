@@ -276,7 +276,8 @@
         <h1>HubSpot Service - Webhook Events</h1>
         
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('webhooks')">Webhooks</button>
+            <button class="tab active" onclick="switchTab('webhooks')">Inbound Webhook Events</button>
+            <button class="tab" onclick="switchTab('responses')">HubSpot Responses</button>
         </div>
         
         <div id="webhooksTab" class="tab-content active">
@@ -287,6 +288,18 @@
                 </div>
                 <div id="webhooksContainer">
                     <div class="empty-state">Loading webhooks...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="responsesTab" class="tab-content">
+            <div class="section">
+                <div class="sellers-header">
+                    <h2>HubSpot Responses</h2>
+                    <button id="refreshResponsesBtn" class="btn btn-secondary">Refresh</button>
+                </div>
+                <div id="responsesContainer">
+                    <div class="empty-state">Loading responses...</div>
                 </div>
             </div>
         </div>
@@ -306,6 +319,11 @@
             loadWebhooks();
         });
         
+        // Refresh responses button
+        document.getElementById('refreshResponsesBtn').addEventListener('click', () => {
+            loadResponses();
+        });
+        
         // Tab switching
         function switchTab(tabName) {
             // Update tab buttons
@@ -322,6 +340,9 @@
             if (tabName === 'webhooks') {
                 document.getElementById('webhooksTab').classList.add('active');
                 loadWebhooks();
+            } else if (tabName === 'responses') {
+                document.getElementById('responsesTab').classList.add('active');
+                loadResponses();
             }
         }
 
@@ -363,6 +384,7 @@
                             <div class="webhook-time">${createdDate}</div>
                         </div>
                         <div class="webhook-details">
+                            <div class="webhook-detail"><strong>Webhook Event ID:</strong> ${webhook.id}</div>
                             <div class="webhook-detail"><strong>Event Type:</strong> ${escapeHtml(webhook.webhookEventType)}</div>
                             <div class="webhook-detail"><strong>Object Type:</strong> ${escapeHtml(webhook.webhookObjectType)}</div>
                             <div class="webhook-detail"><strong>Object ID:</strong> ${escapeHtml(webhook.webhookObjectId)}</div>
@@ -375,6 +397,56 @@
             }).join('');
             
             container.innerHTML = webhooksHTML;
+        }
+        
+        // Load HubSpot responses from API
+        async function loadResponses() {
+            const container = document.getElementById('responsesContainer');
+            container.innerHTML = '<div class="empty-state">Loading responses...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/hubspot-responses`);
+                
+                if (response.ok) {
+                    const responses = await response.json();
+                    displayResponses(responses);
+                } else {
+                    container.innerHTML = '<div class="empty-state">Error loading responses</div>';
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="empty-state">Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Display HubSpot responses in the UI
+        function displayResponses(responses) {
+            const container = document.getElementById('responsesContainer');
+            
+            if (responses.length === 0) {
+                container.innerHTML = '<div class="empty-state">No HubSpot responses found.</div>';
+                return;
+            }
+            
+            const responsesHTML = responses.map(response => {
+                const createdDate = new Date(response.createdAt).toLocaleString();
+                const statusClass = response.responseStatusCode >= 200 && response.responseStatusCode < 300 ? 'success' : 'error';
+                return `
+                    <div class="webhook-card">
+                        <div class="webhook-header">
+                            <div class="webhook-id">HubSpot Object ID: ${escapeHtml(response.hubSpotObjectId)}</div>
+                            <div class="webhook-time">${createdDate}</div>
+                        </div>
+                        <div class="webhook-details">
+                            <div class="webhook-detail"><strong>Webhook Event ID:</strong> ${response.webhookEventId}</div>
+                            <div class="webhook-detail"><strong>Status Code:</strong> <span style="color: ${statusClass === 'success' ? 'green' : 'red'}">${response.responseStatusCode}</span></div>
+                            <div class="webhook-detail"><strong>Response Body:</strong></div>
+                            <div class="webhook-body">${escapeHtml(response.responseBody)}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = responsesHTML;
         }
         
         // Show message helper
