@@ -1,4 +1,4 @@
-namespace HubSpotService.Models;
+
 
 /// <summary>
 /// DTO for creating a new webhook event

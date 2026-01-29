@@ -1,4 +1,4 @@
-namespace HubSpotService.Models;
+
 
 /// <summary>
 /// DTO for reading webhook event data
