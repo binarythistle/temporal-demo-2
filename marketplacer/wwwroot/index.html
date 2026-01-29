@@ -293,6 +293,14 @@
                         <label for="sellerDomain">Seller Domain</label>
                         <input type="text" id="sellerDomain" name="sellerDomain" placeholder="example.com">
                     </div>
+                    <div class="form-group">
+                        <label for="sellerIndustry">Seller Industry</label>
+                        <input type="text" id="sellerIndustry" name="sellerIndustry" value="RETAIL">
+                    </div>
+                    <div class="form-group">
+                        <label for="sellerPhone">Seller Phone</label>
+                        <input type="text" id="sellerPhone" name="sellerPhone" value="555-111-23456">
+                    </div>
                     <button type="submit" class="btn btn-primary">Create Seller</button>
                 </form>
             </div>
@@ -335,10 +343,14 @@
             
             const sellerName = document.getElementById('sellerName').value.trim();
             const sellerDomain = document.getElementById('sellerDomain').value.trim() || null;
+            const sellerIndustry = document.getElementById('sellerIndustry').value.trim() || null;
+            const sellerPhone = document.getElementById('sellerPhone').value.trim() || null;
             
             const payload = {
                 sellerName,
                 sellerDomain,
+                sellerIndustry,
+                sellerPhone,
                 hubSpotId: null
             };
             
