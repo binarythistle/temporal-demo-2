@@ -31,7 +31,7 @@ app.MapPost("/api/sellers", async (SellerCreateDto dto, AppDbContext db, IHttpCl
         var webhookPayload = new WebhookEventCreateDto(
             IdempotencyKey: Guid.NewGuid().ToString(),
             WebhookId: $"webhook-{Guid.NewGuid()}",
-            WebhookBody: $"{{\"sellerId\": {seller.Id}, \"sellerName\": \"{seller.SellerName}\"}}",
+            WebhookBody: $"{{\"sellerId\": {seller.Id}, \"sellerName\": \"{seller.SellerName}\", \"sellerDomain\": {(seller.SellerDomain != null ? $"\"{seller.SellerDomain}\"" : "null")}, \"sellerIndustry\": {(seller.SellerIndustry != null ? $"\"{seller.SellerIndustry}\"" : "null")}, \"sellerPhone\": {(seller.SellerPhone != null ? $"\"{seller.SellerPhone}\"" : "null")}}}",
             WebhookHeaders: "{\"Content-Type\": \"application/json\"}",
             WebhookObjectId: seller.Id.ToString(),
             WebhookObjectType: "Seller",
