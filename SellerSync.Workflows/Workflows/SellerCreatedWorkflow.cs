@@ -11,13 +11,18 @@ namespace SellerSync.Workflows.Workflows;
 /// TEMPORAL CONCEPT: Workflow Orchestration
 /// This workflow orchestrates a multi-step process:
 /// 1. Create a company in HubSpot
-/// 2. (Phase 3) Update the seller in Marketplacer with the HubSpot ID
+/// 2. Update the seller in Marketplacer with the HubSpot ID
 ///
 /// Key benefits over the original synchronous approach:
 /// - If HubSpot is down, Temporal retries automatically with exponential backoff
 /// - If the process crashes mid-workflow, it resumes from where it left off
 /// - Full visibility into execution state via Temporal UI
 /// - Idempotency via workflow ID (using the webhook's idempotency key)
+///
+/// TEMPORAL CONCEPT: Saga Pattern
+/// This workflow implements a simple saga: HubSpot → Marketplacer
+/// If Marketplacer fails after HubSpot succeeds, Temporal preserves the HubSpot ID
+/// and keeps retrying the Marketplacer call. No data is lost!
 /// </summary>
 [Workflow]
 public class SellerCreatedWorkflow
@@ -38,16 +43,25 @@ public class SellerCreatedWorkflow
         // - InitialInterval: Wait time before first retry (1 second)
         // - MaximumInterval: Cap on wait time between retries (30 seconds)
         // - BackoffCoefficient: Multiplier for each subsequent retry (2x)
-        // - MaximumAttempts: Total attempts before giving up (5)
-        //
-        // With these settings, retry intervals would be: 1s, 2s, 4s, 8s, 16s (capped at 30s)
+        // - MaximumAttempts: Total attempts before giving up (0 = infinite)
 
-        var retryPolicy = new RetryPolicy
+        // HubSpot: External API we don't control - bounded retries
+        var hubSpotRetryPolicy = new RetryPolicy
         {
             InitialInterval = TimeSpan.FromSeconds(1),
             MaximumInterval = TimeSpan.FromSeconds(30),
             BackoffCoefficient = 2.0f,
             MaximumAttempts = 5
+        };
+
+        // Marketplacer: Our service - infinite retries until it's back up
+        // MaximumAttempts = 0 means "retry forever"
+        var marketplacerRetryPolicy = new RetryPolicy
+        {
+            InitialInterval = TimeSpan.FromSeconds(1),
+            MaximumInterval = TimeSpan.FromSeconds(30),
+            BackoffCoefficient = 2.0f,
+            MaximumAttempts = 0  // Infinite retries!
         };
 
         // Step 1: Create company in HubSpot
@@ -66,16 +80,33 @@ public class SellerCreatedWorkflow
             new ActivityOptions
             {
                 StartToCloseTimeout = TimeSpan.FromMinutes(2),
-                RetryPolicy = retryPolicy
+                RetryPolicy = hubSpotRetryPolicy
             });
 
-        // TODO (Phase 3): Add Marketplacer callback activity here
-        // The HubSpot result contains the HubSpotObjectId we need to send back
+        // Step 2: Update seller in Marketplacer with the HubSpot ID
+        // TEMPORAL CONCEPT: Workflow State
+        // At this point, hubSpotResult.HubSpotObjectId is stored in workflow history.
+        // If the process crashes here and restarts, Temporal will NOT re-run the
+        // HubSpot activity - it will replay the result from history and continue.
+        //
+        // This is the key insight: even if Marketplacer is down for hours,
+        // when it comes back up, the workflow will complete successfully
+        // with the original HubSpot ID.
+
+        await Workflow.ExecuteActivityAsync(
+            (HubSpotActivities act) => act.UpdateSellerInMarketplacerAsync(
+                input.WebhookObjectId,
+                hubSpotResult.HubSpotObjectId),
+            new ActivityOptions
+            {
+                StartToCloseTimeout = TimeSpan.FromMinutes(2),
+                RetryPolicy = marketplacerRetryPolicy  // Infinite retries!
+            });
 
         return new WorkflowResult(
             Success: true,
             HubSpotObjectId: hubSpotResult.HubSpotObjectId,
-            Message: $"Successfully created HubSpot company {hubSpotResult.HubSpotObjectId} for seller {input.WebhookObjectId}"
+            Message: $"Successfully created HubSpot company {hubSpotResult.HubSpotObjectId} and updated seller {input.WebhookObjectId}"
         );
     }
 }

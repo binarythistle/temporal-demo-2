@@ -109,6 +109,53 @@ public class HubSpotActivities
     }
 
     /// <summary>
+    /// Updates a seller in Marketplacer with the HubSpot company ID.
+    ///
+    /// This activity:
+    /// 1. Calls Marketplacer's PUT /api/sellers/{id} endpoint
+    /// 2. Sends only the HubSpotId field (partial update)
+    ///
+    /// TEMPORAL CONCEPT: Saga Pattern
+    /// This is the second step in our "saga". If this fails after HubSpot succeeded,
+    /// Temporal will keep retrying until it succeeds or exhausts retries.
+    /// The workflow state (including the HubSpot ID) is preserved across retries.
+    /// </summary>
+    [Activity]
+    public async Task UpdateSellerInMarketplacerAsync(string sellerId, string hubSpotId)
+    {
+        _logger.LogInformation(
+            "Updating seller {SellerId} in Marketplacer with HubSpot ID {HubSpotId}",
+            sellerId, hubSpotId);
+
+        var httpClient = _httpClientFactory.CreateClient("Marketplacer");
+        var marketplacerEndpoint = _configuration["Marketplacer:Endpoint"]
+            ?? "http://localhost:5027/api/sellers";
+
+        var updateUrl = $"{marketplacerEndpoint}/{sellerId}";
+
+        // Marketplacer accepts partial updates - we only send the HubSpotId
+        var updatePayload = new { HubSpotId = hubSpotId };
+
+        var response = await httpClient.PutAsJsonAsync(updateUrl, updatePayload);
+        var responseContent = await response.Content.ReadAsStringAsync();
+
+        _logger.LogInformation(
+            "Marketplacer API response: {StatusCode} - {Response}",
+            response.StatusCode, responseContent);
+
+        // If the call failed, throw so Temporal can retry
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new HttpRequestException(
+                $"Marketplacer API returned {response.StatusCode}: {responseContent}");
+        }
+
+        _logger.LogInformation(
+            "Successfully updated seller {SellerId} with HubSpot ID {HubSpotId}",
+            sellerId, hubSpotId);
+    }
+
+    /// <summary>
     /// Helper to safely extract a property from JSON, with a default value.
     /// </summary>
     private static string GetJsonPropertyOrDefault(JsonElement element, string propertyName, string defaultValue)
