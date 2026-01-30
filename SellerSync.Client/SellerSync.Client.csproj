@@ -1,18 +1,17 @@
-<Project Sdk="Microsoft.NET.Sdk.Worker">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
     <ProjectReference Include="..\SellerSync.Workflows\SellerSync.Workflows.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Temporalio.Extensions.Hosting" Version="1.10.0" />
+    <PackageReference Include="Temporalio" Version="1.10.0" />
   </ItemGroup>
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>7ec04b33-9256-42ed-b935-7466dfda3f69</UserSecretsId>
   </PropertyGroup>
 
 </Project>

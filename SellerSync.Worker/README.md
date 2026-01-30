@@ -19,9 +19,9 @@ This project replaces the synchronous `HubSpotService` with a Temporal-based wor
 ## Project Structure
 
 ```
-SellerSync.Contracts/    # Shared DTOs (no dependencies)
-SellerSync.Workflows/    # Workflow & Activity definitions
-SellerSync.Worker/       # ASP.NET host + Temporal worker
+SellerSync.Workflows/    # Shared: Workflow & Activity definitions + DTOs
+SellerSync.Client/       # ASP.NET Web API (port 5200) - receives webhooks, starts workflows
+SellerSync.Worker/       # Temporal worker (no HTTP) - executes workflows and activities
 ```
 
 ## Quick Start
@@ -50,9 +50,17 @@ dotnet user-secrets set "HubSpotToken" "your-hubspot-api-token"
 dotnet run --project SellerSync.Worker
 ```
 
-The worker starts on `http://localhost:5200`
+The worker connects to Temporal and polls for work (no HTTP port).
 
-### 4. Run Marketplacer (for end-to-end testing)
+### 4. Run the Client (API)
+
+```bash
+dotnet run --project SellerSync.Client
+```
+
+The client starts on `http://localhost:5200`
+
+### 5. Run Marketplacer (for end-to-end testing)
 
 Update `marketplacer/appsettings.Development.json`:
 ```json
@@ -64,7 +72,7 @@ Then:
 dotnet run --project marketplacer
 ```
 
-### 5. Create a Seller
+### 6. Create a Seller
 
 ```bash
 curl -X POST http://localhost:5027/api/sellers \
@@ -72,17 +80,20 @@ curl -X POST http://localhost:5027/api/sellers \
   -d '{"sellerName":"Acme Corp","sellerDomain":"acme.com","sellerIndustry":"TECH","sellerPhone":"555-1234"}'
 ```
 
-### 6. Watch the Workflow
+### 7. Watch the Workflow
 
 Open the Temporal UI at http://localhost:8233 to see the workflow execute.
 
-## API Endpoints
+## API Endpoints (SellerSync.Client - port 5200)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
+| `/` | GET | Health check / info |
 | `/api/ping` | GET | Test endpoint - triggers a simple ping workflow |
 | `/api/webhooks` | POST | Receives webhooks from Marketplacer, starts SellerCreatedWorkflow |
 | `/api/workflows/{id}` | GET | Check workflow status |
+
+**Note:** The Worker project has no HTTP endpoints - it only polls Temporal for work.
 
 ## Chaos Testing Demo
 
@@ -100,7 +111,7 @@ The workflow includes a 10-second delay to allow time for chaos testing:
 
 ```
 ┌─────────────┐     webhook     ┌─────────────────┐
-│ Marketplacer │ ──────────────▶│ SellerSync.Worker│
+│ Marketplacer │ ──────────────▶│ SellerSync.Client│
 │  (port 5027) │                │   (port 5200)    │
 └─────────────┘                └────────┬─────────┘
        ▲                                │
@@ -109,6 +120,13 @@ The workflow includes a 10-second delay to allow time for chaos testing:
        │                       ┌─────────────────┐
        │                       │  Temporal Server │
        │                       │   (port 7233)    │
+       │                       └────────┬─────────┘
+       │                                │
+       │                                │ dispatches to
+       │                                ▼
+       │                       ┌─────────────────┐
+       │                       │SellerSync.Worker │
+       │                       │  (no HTTP port)  │
        │                       └────────┬─────────┘
        │                                │
        │                                │ executes
