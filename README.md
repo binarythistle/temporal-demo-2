@@ -14,7 +14,7 @@ This project replaces the synchronous `HubSpotService` (the _before code_) with 
 
 Marketplacer is a SaaS platform that hosts Sellers and the Sellers Products. Products can be surfaced by an _Operator_ for sale on their marketplace, and any associated orders for those products flow back through Marketplacer to be actioned by each seller.
 
-The _seller onboarding_ process is critical to the successful operation of the marketplace. In the workflow we look at today, Seller are created in Marketplacer but must also be created in the Operaors CRM, (in this case HubSpot). Moreover, an association between the objects created in both systems must exist.
+The _seller onboarding_ process is critical to the successful operation of the marketplace. In the workflow we look at today, Sellers are created in Marketplacer but must also be created in the Operaors CRM, (in this case HubSpot). Moreover, an association between the objects created in both systems must exist.
 
 DIAGRAM HERE
 
@@ -35,7 +35,7 @@ DIAGRAM HERE
 ## Project Structure
 
 ```
-HubSpotService           # The legacy or _before_ code, replaced by the 3 Seller.* projects
+HubSpotService           # The legacy or before code, replaced by the 3 Seller.* projects
 SellerSync.Workflows/    # Shared: Workflow & Activity definitions + DTOs
 SellerSync.Client/       # ASP.NET Web API (port 5200) - receives webhooks, starts workflows
 SellerSync.Worker/       # Temporal worker (no HTTP) - executes workflows and activities
@@ -44,7 +44,7 @@ marketplacer             # Mock service (create sellers here and auto generate w
 
 ## Starting Marketplacer
 
-The Marketplacer Mock service is recommended for creating sellers and generating webhooks irrespective of whether you are runing the legacy or Temporal solution. It also acts as the API endpoint that allows for the updating of the Seller object with the HubSpot Id.
+The Marketplacer Mock service is recommended for creating sellers and generating webhooks irrespective of whether you are runing the legacy or Temporal solution. It also acts as the API endpoint that allows for the updating of the Marketplacer Seller object with the HubSpot Id.
 
 ### 1. Run database migrations
 
