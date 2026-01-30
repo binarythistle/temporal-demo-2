@@ -19,8 +19,7 @@ This project replaces the synchronous `HubSpotService` with a Temporal-based wor
 ## Project Structure
 
 ```
-SellerSync.Contracts/    # Shared DTOs (no dependencies)
-SellerSync.Workflows/    # Workflow & Activity definitions
+SellerSync.Workflows/    # Workflow & Activity definitions + shared DTOs
 SellerSync.Worker/       # ASP.NET host + Temporal worker
 ```
 
