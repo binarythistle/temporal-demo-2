@@ -28,6 +28,7 @@ The _seller onboarding_ process is critical to the successful operation of the m
 - .NET 10.0 SDK
 - Temporal CLI (`brew install temporal` or [download](https://github.com/temporalio/cli/releases))
 - HubSpot API token (for real HubSpot integration)
+- Clone this repository to your machine
 
 > [!TIP]
 > Set up instructions on how to set up a _Private Legacy App_ in HubSpot can be found [here](https://developers.hubspot.com/docs/apps/legacy-apps/private-apps/overview). When selecting the _scopes_ that you need, select: `crm.objects.companies.read` and `crm.objects.companies.write`. The _Access Token_ is what you need to use to follow along.
@@ -48,10 +49,12 @@ The Marketplacer Mock service is recommended for creating sellers and generating
 
 ### 1. Run database migrations
 
-To set up, navigate to the project folder and run the database migrations to create the Sqlite DB:
+
+
+To set up, navigate to the `marketplacer` project folder and run the database migrations to create the Sqlite DB:
 
 > [!TIP]
-> You'll need **EF Core** tools for this bit, to install them: `dotnet tool install --global dotnet-ef`
+> You'll need **EF Core** tools for this bit, to install them: `dotnet tool install --global dotnet-ef`, suggest you also to build the `marketplacer` project prior to running migrations: `dotnet build`: 
 
 ```bash
 dotnet ef database update
@@ -85,25 +88,35 @@ Navigate to: `http://localhost:5027/` to see the UI.
 > [!NOTE]
 > If you're not interested in running the legacy code, jump to the **Temporal Quick Start** 
 
-### 1. Run database migrations
+### 1. Build the HubSpotSerivce project
 
-Navigate to the HubSpotService project and execute the database migrations to set up the Sqlite Db.
+Navigate to the `HubSpotService` project and build it:
+
+```bash
+dotnet build
+```
+
+### 2. Run database migrations
+
+Execute the database migrations to set up the Sqlite Db.
+
+> [!TIP]
+> Mentioning again, you'll need **EF Core** tools, to install them: `dotnet tool install --global dotnet-ef`
 
 ```bash
 dotnet ef database update
 ```
 
-### 2. Set up user secrets
+### 3. Set up user secrets
 
 Next you'll need to add the HubSpot Access Token as a user secret:
 
 ```bash
-cd HubSpotService
 dotnet user-secrets init
 dotnet user-secrets set "HubSpotToken" "<your-hubspot-api-token>"
 ```
 
-### 3. Run
+### 4. Run
 
 You can now run the project:
 
@@ -113,7 +126,17 @@ dotnet run
 
 Navigate to: `http://localhost:5200/` to see the UI.
 
+### 5. Create Sellers
+
+You can create Sellers from the Marketplacer service here: http://localhost:5027/.
+
+> [!IMPORTANT]
+> There is an intentional 10s in the HubSpotService service before it calls back to Marketplacer (giving the user time to kill Marketplacer for demo purposes). As this is a synchronous operation, there is a delay in the Marketplacer service UI updating.
+
 ## Temporal Quick Start
+
+> [!WARNING]
+> If you've run the HubSpotLegacy service, be sure to kill it before continuing as it uses the same port (`5200`) as the Temporal Client.
 
 ### 1. Start Temporal Server
 
@@ -136,7 +159,7 @@ dotnet user-secrets set "HubSpotToken" "<your-hubspot-api-token>"
 ### 3. Run the Worker
 
 ```bash
-dotnet run --project SellerSync.Worker
+dotnet run
 ```
 
 The worker connects to Temporal and polls for work (no HTTP port).
@@ -144,7 +167,8 @@ The worker connects to Temporal and polls for work (no HTTP port).
 ### 4. Run the Client (API)
 
 ```bash
-dotnet run --project SellerSync.Client
+cd SellerSync.Client
+dotnet run
 ```
 
 The client starts on `http://localhost:5200`
