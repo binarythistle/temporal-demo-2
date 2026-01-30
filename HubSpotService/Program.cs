@@ -14,7 +14,7 @@ builder.Services.AddMapster();
 
 builder.Services.AddScoped<HubSpotCompanyService>();
 
-// Configure HttpClient for HubSpot
+
 builder.Services.AddHttpClient("HubSpot", client =>
 {
     var token = builder.Configuration["HubSpotToken"];
@@ -22,7 +22,7 @@ builder.Services.AddHttpClient("HubSpot", client =>
     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 });
 
-// Configure HttpClient for Marketplacer
+
 builder.Services.AddHttpClient("Marketplacer", client =>
 {
     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -51,7 +51,7 @@ app.MapPost("/api/webhooks", async (WebhookEventCreateDto createDto, AppDbContex
 
     var response = await httpClient.PostAsync(hubSpotEndpoint, content);
     
-    // Parse HubSpot response and save to database
+    
     var responseContent = await response.Content.ReadAsStringAsync();
     Console.WriteLine($"HubSpot API Response: {response.StatusCode} - {responseContent}");
 
