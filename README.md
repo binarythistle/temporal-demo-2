@@ -176,7 +176,7 @@ The client starts on `http://localhost:5200`
 
 ### 5. Create a Seller
 
-Use the **Marketplacer** service to create a Seller
+Use the **Marketplacer** service (http://localhost:5027/.) to create a Seller.
 
 
 ### 6. Watch the Workflow
@@ -195,6 +195,8 @@ Open the Temporal UI at http://localhost:8233 to see the workflow execute.
 **Note:** The Worker project has no HTTP endpoints - it only polls Temporal for work.
 
 ## Chaos Testing Demo
+
+### Test 1: Kill Marketplacer
 
 The Temporal workflow includes a 10-second delay to allow time for chaos testing:
 
