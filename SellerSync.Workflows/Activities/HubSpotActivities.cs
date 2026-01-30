@@ -3,9 +3,8 @@ using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Temporalio.Activities;
-using SellerSync.Contracts;
 
-namespace SellerSync.Workflows.Activities;
+namespace SellerSync.Workflows;
 
 /// <summary>
 /// Activities for interacting with external APIs (HubSpot and Marketplacer).

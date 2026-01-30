@@ -1,9 +1,7 @@
 using System.Net.Http.Headers;
 using Temporalio.Client;
 using Temporalio.Extensions.Hosting;
-using SellerSync.Contracts;
-using SellerSync.Workflows.Activities;
-using SellerSync.Workflows.Workflows;
+using SellerSync.Workflows;
 
 var builder = WebApplication.CreateBuilder(args);
 

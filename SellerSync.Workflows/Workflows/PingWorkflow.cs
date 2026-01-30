@@ -1,7 +1,6 @@
 using Temporalio.Workflows;
-using SellerSync.Workflows.Activities;
 
-namespace SellerSync.Workflows.Workflows;
+namespace SellerSync.Workflows;
 
 /// <summary>
 /// A simple workflow to verify Temporal is working correctly.

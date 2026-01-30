@@ -1,6 +1,6 @@
 using Temporalio.Activities;
 
-namespace SellerSync.Workflows.Activities;
+namespace SellerSync.Workflows;
 
 /// <summary>
 /// Simple activity for testing Temporal connectivity.

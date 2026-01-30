@@ -1,9 +1,7 @@
 using Temporalio.Workflows;
 using Temporalio.Common;
-using SellerSync.Contracts;
-using SellerSync.Workflows.Activities;
 
-namespace SellerSync.Workflows.Workflows;
+namespace SellerSync.Workflows;
 
 /// <summary>
 /// Workflow that handles the seller.created event from Marketplacer.
