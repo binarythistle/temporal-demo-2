@@ -16,7 +16,7 @@ Marketplacer is a SaaS platform that hosts Sellers and the Sellers Products. Pro
 
 The _seller onboarding_ process is critical to the successful operation of the marketplace. In the workflow we look at today, Sellers are created in Marketplacer but must also be created in the Operaors CRM, (in this case HubSpot). Moreover, an association between the objects created in both systems must exist.
 
-DIAGRAM HERE
+<img width="507" height="163" alt="2026-01-30_12-29-05" src="https://github.com/user-attachments/assets/7be294ef-0170-4a69-acb0-12aee098c6e3" />
 
 > [!NOTE]
 > In order for the Seller to be considered successfully created in Marketplacer, it must have an associate HubSpot Id. This success condition is therefore depended on a distributed workflow.
@@ -184,36 +184,8 @@ The Temporal workflow includes a 10-second delay to allow time for chaos testing
 
 ## Architecture
 
-```
-┌─────────────┐     webhook     ┌─────────────────┐
-│ Marketplacer │ ──────────────▶│ SellerSync.Client│
-│  (port 5027) │                │   (port 5200)    │
-└─────────────┘                └────────┬─────────┘
-       ▲                                │
-       │                                │ starts workflow
-       │                                ▼
-       │                       ┌─────────────────┐
-       │                       │  Temporal Server │
-       │                       │   (port 7233)    │
-       │                       └────────┬─────────┘
-       │                                │
-       │                                │ dispatches to
-       │                                ▼
-       │                       ┌─────────────────┐
-       │                       │SellerSync.Worker │
-       │                       │  (no HTTP port)  │
-       │                       └────────┬─────────┘
-       │                                │
-       │                                │ executes
-       │                                ▼
-       │                       ┌─────────────────┐
-       │    PUT /sellers/{id}  │SellerCreated    │
-       │◀──────────────────────│    Workflow     │
-       │                       │                 │
-       │                       │ 1. HubSpot API  │──────▶ HubSpot
-       │                       │ 2. Marketplacer │
-       │                       └─────────────────┘
-```
+<img width="646" height="548" alt="2026-01-30_13-23-25" src="https://github.com/user-attachments/assets/8c56226c-6934-4635-8495-1727d936a548" />
+
 
 ## Key Temporal Concepts Demonstrated
 
