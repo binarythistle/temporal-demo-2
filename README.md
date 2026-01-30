@@ -14,7 +14,7 @@ This project replaces the synchronous `HubSpotService` (the _before code_) with 
 
 Marketplacer is a SaaS platform that hosts Sellers and the Sellers Products. Products can be surfaced by an _Operator_ for sale on their marketplace, and any associated orders for those products flow back through Marketplacer to be actioned by each seller.
 
-The _seller onboarding_ process is critical to the successful operation of the marketplace. In the workflow we look at today, Sellers are created in Marketplacer but must also be created in the Operaors CRM, (in this case HubSpot). Moreover, an association between the objects created in both systems must exist.
+The _seller onboarding_ process is critical to the successful operation of the marketplace. In the workflow we look at today, Sellers are created in Marketplacer but must also be created in the Operators CRM, (in this case HubSpot). Moreover, an association between the objects created in both systems must exist.
 
 <img width="507" height="163" alt="2026-01-30_12-29-05" src="https://github.com/user-attachments/assets/7be294ef-0170-4a69-acb0-12aee098c6e3" />
 
@@ -45,7 +45,7 @@ marketplacer             # Mock service (create sellers here and auto generate w
 
 ## Starting Marketplacer
 
-The Marketplacer Mock service is recommended for creating sellers and generating webhooks irrespective of whether you are runing the legacy or Temporal solution. It also acts as the API endpoint that allows for the updating of the Marketplacer Seller object with the HubSpot Id.
+The Marketplacer Mock service is recommended for creating sellers and generating webhooks irrespective of whether you are running the legacy or Temporal solution. It also acts as the API endpoint that allows for the updating of the Marketplacer Seller object with the HubSpot Id.
 
 ### 1. Run database migrations
 
@@ -88,7 +88,7 @@ Navigate to: `http://localhost:5027/` to see the UI.
 > [!NOTE]
 > If you're not interested in running the legacy code, jump to the **Temporal Quick Start** 
 
-### 1. Build the HubSpotSerivce project
+### 1. Build the HubSpotService project
 
 Navigate to the `HubSpotService` project and build it:
 
@@ -136,7 +136,7 @@ You can create Sellers from the Marketplacer service here: http://localhost:5027
 ## Temporal Quick Start
 
 > [!WARNING]
-> If you've run the HubSpotLegacy service, be sure to kill it before continuing as it uses the same port (`5200`) as the Temporal Client.
+> If you've run the HubSpotService legacy service, be sure to kill it before continuing as it uses the same port (`5200`) as the Temporal Client.
 
 ### 1. Start Temporal Server
 
