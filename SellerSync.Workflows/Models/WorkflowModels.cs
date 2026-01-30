@@ -1,4 +1,4 @@
-namespace SellerSync.Contracts;
+namespace SellerSync.Workflows;
 
 /// <summary>
 /// Input to the SellerCreatedWorkflow.

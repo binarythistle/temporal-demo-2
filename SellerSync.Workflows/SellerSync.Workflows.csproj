@@ -1,10 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\SellerSync.Contracts\SellerSync.Contracts.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.2" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.2" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.2" />

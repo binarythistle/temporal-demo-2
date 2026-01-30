@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace SellerSync.Contracts;
+namespace SellerSync.Workflows;
 
 /// <summary>
 /// Request body for creating a company in HubSpot.
