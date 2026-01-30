@@ -72,6 +72,15 @@ app.MapPost("/api/webhooks", async (WebhookEventCreateDto createDto, AppDbContex
     db.HubSpotResponses.Add(hubSpotResponse);
     await db.SaveChangesAsync();
 
+    // ==========================================================================
+    // DEMO DELAY: 10 seconds to allow time to kill Marketplacer
+    // This simulates a slow process and gives time to demonstrate the failure
+    // scenario where Marketplacer goes down after HubSpot company is created.
+    // ==========================================================================
+    Console.WriteLine("Waiting 10 seconds before calling Marketplacer... (kill Marketplacer now to see failure)");
+    await Task.Delay(TimeSpan.FromSeconds(10));
+    Console.WriteLine("Resuming - calling Marketplacer...");
+
     // Call back to originating system (Marketplacer) with HubSpot ID
     var marketplacerEndpoint = configuration["MarketplacerEndpont"];
     var sellerId = createDto.WebhookObjectId;
