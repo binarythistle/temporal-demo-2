@@ -4,11 +4,24 @@ A demonstration of how Temporal Technologies can replace synchronous webhook pro
 
 ## Overview
 
-This project replaces the synchronous `HubSpotService` with a Temporal-based workflow that:
+This project replaces the synchronous `HubSpotService` (the _before code_) with a Temporal-based workflow that:
 - Creates a company in HubSpot CRM
-- Updates the seller in Marketplacer with the HubSpot ID
+- Updates the seller in [Marketplacer](https://marketplacer.com/) with the HubSpot ID
 - Automatically retries failed operations with exponential backoff
 - Survives process crashes and resumes from where it left off
+
+### Business Context
+
+Marketplacer is a SaaS platform that hosts Sellers and the Sellers Products. Products can be surfaced by an _Operator_ for sale on their marketplace, and any associated orders for those products flow back through Marketplacer to be actioned by each seller.
+
+The _seller onboarding_ process is critical to the successful operation of the marketplace. In the workflow we look at today, Seller are created in Marketplacer but must also be created in the Operaors CRM, (in this case HubSpot). Moreover, an association between the objects created in both systems must exist.
+
+DIAGRAM HERE
+
+> [!NOTE]
+> In order for the Seller to be considered successfully created in Marketplacer, it must have an associate HubSpot Id. This success condition is therefore depended on a distributed workflow.
+
+
 
 ## Prerequisites
 
@@ -16,15 +29,91 @@ This project replaces the synchronous `HubSpotService` with a Temporal-based wor
 - Temporal CLI (`brew install temporal` or [download](https://github.com/temporalio/cli/releases))
 - HubSpot API token (for real HubSpot integration)
 
+> [!TIP]
+> Set up instructions on how to set up a _Private Legacy App_ in HubSpot can be found [here](https://developers.hubspot.com/docs/apps/legacy-apps/private-apps/overview). When selecting the _scopes_ that you need, select: `crm.objects.companies.read` and `crm.objects.companies.write`. The _Access Token_ is what you need to use to follow along.
+
 ## Project Structure
 
 ```
+HubSpotService           # The legacy or _before_ code, replaced by the 3 Seller.* projects
 SellerSync.Workflows/    # Shared: Workflow & Activity definitions + DTOs
 SellerSync.Client/       # ASP.NET Web API (port 5200) - receives webhooks, starts workflows
 SellerSync.Worker/       # Temporal worker (no HTTP) - executes workflows and activities
+marketplacer             # Mock service (create sellers here and auto generate webhooks)
 ```
 
-## Quick Start
+## Starting Marketplacer
+
+The Marketplacer Mock service is recommended for creating sellers and generating webhooks irrespective of whether you are runing the legacy or Temporal solution. It also acts as the API endpoint that allows for the updating of the Seller object with the HubSpot Id.
+
+### 1. Run database migrations
+
+To set up, navigate to the project folder and run the database migrations to create the Sqlite DB:
+
+> [!TIP]
+> You'll need **EF Core** tools for this bit, to install them: `dotnet tool install --global dotnet-ef`
+
+```bash
+dotnet ef database update
+```
+
+### 2. Check webhook endpoint configuration
+
+Check `appsettings.Development.json` has the following entry:
+
+```json
+"HubSpotServiceWebhookEndpoint" : "http://localhost:5200/api/webhooks",
+```
+
+This is the webhook destination endpoint.
+
+> [!WARNING]
+> **Both** the **HubSpotService** and the **SellerSync.Client** start on port `5200` to allow for easy movement between them during the demo. Ensure only 1 is running at a time.
+
+### 3. Run
+
+You can now run up the project:
+
+```bash
+dotnet run
+```
+
+Navigate to: `http://localhost:5027/` to see the UI.
+
+## HubSpotService Quick Start
+
+> [!NOTE]
+> If you're not interested in running the legacy code, jump to the **Temporal Quick Start** 
+
+### 1. Run database migrations
+
+Navigate to the HubSpotService project and execute the database migrations to set up the Sqlite Db.
+
+```bash
+dotnet ef database update
+```
+
+### 2. Set up user secrets
+
+Next you'll need to add the HubSpot Access Token as a user secret:
+
+```bash
+cd HubSpotService
+dotnet user-secrets init
+dotnet user-secrets set "HubSpotToken" "<your-hubspot-api-token>"
+```
+
+### 3. Run
+
+You can now run the project:
+
+```bash
+dotnet run
+```
+
+Navigate to: `http://localhost:5200/` to see the UI.
+
+## Temporal Quick Start
 
 ### 1. Start Temporal Server
 
@@ -36,12 +125,12 @@ This starts:
 - Temporal Server on `localhost:7233`
 - Temporal Web UI on `localhost:8233`
 
-### 2. Configure HubSpot Token (Optional)
+### 2. Configure HubSpot Token
 
 ```bash
 cd SellerSync.Worker
 dotnet user-secrets init
-dotnet user-secrets set "HubSpotToken" "your-hubspot-api-token"
+dotnet user-secrets set "HubSpotToken" "<your-hubspot-api-token>"
 ```
 
 ### 3. Run the Worker
@@ -60,27 +149,13 @@ dotnet run --project SellerSync.Client
 
 The client starts on `http://localhost:5200`
 
-### 5. Run Marketplacer (for end-to-end testing)
 
-Update `marketplacer/appsettings.Development.json`:
-```json
-"HubSpotServiceWebhookEndpoint": "http://localhost:5200/api/webhooks"
-```
+### 5. Create a Seller
 
-Then:
-```bash
-dotnet run --project marketplacer
-```
+Use the **Marketplacer** service to create a Seller
 
-### 6. Create a Seller
 
-```bash
-curl -X POST http://localhost:5027/api/sellers \
-  -H "Content-Type: application/json" \
-  -d '{"sellerName":"Acme Corp","sellerDomain":"acme.com","sellerIndustry":"TECH","sellerPhone":"555-1234"}'
-```
-
-### 7. Watch the Workflow
+### 6. Watch the Workflow
 
 Open the Temporal UI at http://localhost:8233 to see the workflow execute.
 
@@ -97,13 +172,13 @@ Open the Temporal UI at http://localhost:8233 to see the workflow execute.
 
 ## Chaos Testing Demo
 
-The workflow includes a 10-second delay to allow time for chaos testing:
+The Temporal workflow includes a 10-second delay to allow time for chaos testing:
 
 1. Create a seller via Marketplacer
 2. Immediately stop Marketplacer (Ctrl+C)
 3. Watch the Temporal UI - the workflow will show retrying the Marketplacer callback
 4. Restart Marketplacer
-5. The workflow completes automatically!
+5. The workflow completes automatically
 
 **Key point:** No data was lost. No manual intervention needed.
 
